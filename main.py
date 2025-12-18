@@ -14,7 +14,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import scypi.optimize as opt
+import scipy.optimize as opt
 
 tickers = ['^GSPC','NVDA']
 
@@ -36,9 +36,7 @@ def portfolio_returns(weights,mean_returns,cov_matrix,rf_rate):
     std_dev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
     sharpe = (returns - rf_rate) / std_dev
 
-    print(f"The returns are {returns:.4f}")
-    print(f"The standard deviation is {std_dev:.4f} ")
-    print(f"The sharpe ratio is {sharpe:.4f}")
+    return returns, std_dev, sharpe
 
 # TEST ABOVE FUNC WITH DUMMY DATA 
 test_weights = np.array([0.5, 0.5])
