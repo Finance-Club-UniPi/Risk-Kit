@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crisis-radar"
+version = "1.0.0"
+description = "ML pipeline for predicting S&P 500 drawdown events"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pandas>=1.5.0",
+    "numpy>=1.23.0",
+    "scikit-learn>=1.2.0",
+    "matplotlib>=3.6.0",
+    "yfinance>=0.2.0",
+]
+
+[project.scripts]
+crisis-radar = "crisis_radar.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

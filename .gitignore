@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python package build artifacts
+src/*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Data (keep structure, ignore large files)
+data/raw/*.csv
+data/processed/*
+
+# Artifacts (keep structure, ignore large files)
+artifacts/models/*.pkl
+artifacts/metrics/*.json
+artifacts/metrics/*.csv
+artifacts/configs/*.json
+
+# Reports (keep structure, ignore generated files)
+reports/figures/*.png
+reports/summary.md
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Streamlit
+.streamlit/secrets.toml
+# Keep config.toml for deployment
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+dist/
+build/
+
+# Demo/Development files (not for public repo)
+*DEMO*.md
+*demo*.md
+README_DEMO.md
+create_demo*.ps1
+create_demo*.sh
+
