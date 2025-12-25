@@ -1,3 +1,4 @@
+venv/
 import numpy as np
 import pandas as pd 
 import yfinance as yf
@@ -31,4 +32,3 @@ plt.ylabel("Density")
 plt.legend()
 plt.show()
 print('The 5% percentile is equal =' , q05)
-
