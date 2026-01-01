@@ -1,91 +1,154 @@
 import numpy as np
 
 
-def _as_1d_float_array(returns):
-    returns_array = np.asarray(returns, dtype=float).reshape(-1)
+def _as_1d_float_array(portfolio_returns):
+    """
+    Convert input returns to a 1D numpy array of floats.
+    """
+    returns_array = np.asarray(portfolio_returns, dtype=float).reshape(-1)
 
     if returns_array.size == 0:
-        raise ValueError("Input returns are empty.")
+        raise ValueError("Input portfolio returns are empty.")
 
     return returns_array
 
 
-def wealth_index(portfolio_returns, start_value=1.0):
-    portfolio_returns = _as_1d_float_array(portfolio_returns)
-
-    if start_value <= 0:
-        raise ValueError("start_value must be > 0.")
-
-    portfolio_values = start_value * np.cumprod(1.0 + portfolio_returns)
-
-    return portfolio_values
+def _validate_alpha(alpha):
+    """
+    Validate that alpha is between 0 and 1 (exclusive).
+    """
+    if not (0 < alpha < 1):
+        raise ValueError("alpha must be between 0 and 1.")
 
 
-def drawdown_series(portfolio_returns, start_value=1.0):
-    portfolio_values = wealth_index(portfolio_returns, start_value=start_value)
-
-    running_peaks = np.maximum.accumulate(portfolio_values)
-
-    drawdowns = (running_peaks - portfolio_values) / running_peaks
-
-    return drawdowns
+def _round_float(value, decimals=4):
+    """
+    Round a float to a given number of decimal places.
+    """
+    return float(np.round(value, decimals))
 
 
-def max_drawdown(portfolio_returns, start_value=1.0):
-    drawdowns = drawdown_series(portfolio_returns, start_value=start_value)
+def value_at_risk_historical(returns_array, alpha=0.05, decimals=4):
+    """
+    Historical Value at Risk (VaR).
 
-    maximum_drawdown = np.max(drawdowns)
+    Parameters
+    ----------
+    returns_array : np.ndarray
+        1D array of portfolio returns in decimal form.
+    alpha : float
+        Tail probability (e.g. 0.05 for 5% VaR).
+    decimals : int
+        Number of decimal places for the result.
 
-    return float(maximum_drawdown)
+    Returns
+    -------
+    float
+        VaR as a positive loss number (rounded).
+    """
+    _validate_alpha(alpha)
 
+    var_threshold_return = np.quantile(returns_array, alpha)
+    var_loss = -var_threshold_return
 
-def max_drawdown_duration(portfolio_returns, start_value=1.0):
-    portfolio_values = wealth_index(portfolio_returns, start_value=start_value)
-
-    peak_value = portfolio_values[0]
-
-    current_drawdown_duration = 0
-    longest_drawdown_duration = 0
-
-    for value in portfolio_values:
-        if value >= peak_value:
-            peak_value = value
-            current_drawdown_duration = 0
-        else:
-            current_drawdown_duration += 1
-            longest_drawdown_duration = max(longest_drawdown_duration, current_drawdown_duration)
-
-    return int(longest_drawdown_duration)
+    return _round_float(var_loss, decimals=decimals)
 
 
-def drawdown_diagnostics(portfolio_returns, start_value=1.0):
-    portfolio_returns = _as_1d_float_array(portfolio_returns)
+def cvar_expected_shortfall_historical(returns_array, alpha=0.05, decimals=4):
+    """
+    Historical Conditional VaR (CVaR) / Expected Shortfall.
 
-    portfolio_values = wealth_index(portfolio_returns, start_value=start_value)
+    Parameters
+    ----------
+    returns_array : np.ndarray
+        1D array of portfolio returns in decimal form.
+    alpha : float
+        Tail probability (e.g. 0.05 for worst 5%).
+    decimals : int
+        Number of decimal places for the result.
 
-    running_peaks = np.maximum.accumulate(portfolio_values)
+    Returns
+    -------
+    float
+        CVaR as a positive loss number (rounded).
+    """
+    _validate_alpha(alpha)
 
-    drawdowns = (running_peaks - portfolio_values) / running_peaks
+    var_threshold_return = np.quantile(returns_array, alpha)
+    tail_returns = returns_array[returns_array <= var_threshold_return]
 
-    trough_index = int(np.argmax(drawdowns))
+    if tail_returns.size == 0:
+        return float("nan")
 
-    maximum_drawdown = float(drawdowns[trough_index])
+    expected_shortfall_loss = np.mean(-tail_returns)
 
-    peak_index_before_trough = int(np.argmax(portfolio_values[: trough_index + 1]))
+    return _round_float(expected_shortfall_loss, decimals=decimals)
 
-    diagnostics = {
-        "max_drawdown": maximum_drawdown,
-        "peak_index": peak_index_before_trough,
-        "trough_index": trough_index,
-        "max_drawdown_duration": max_drawdown_duration(portfolio_returns, start_value=start_value),
-    }
 
-    return diagnostics
+def var_cvar_report(portfolio_returns, alpha_levels=(0.01, 0.05), decimals=4):
+    """
+    Compute VaR and CVaR for multiple alpha levels.
+
+    Parameters
+    ----------
+    portfolio_returns : array-like
+        Portfolio returns in decimal form.
+    alpha_levels : iterable of float
+        Tail probabilities (e.g. (0.01, 0.05)).
+    decimals : int
+        Number of decimal places for all results.
+
+    Returns
+    -------
+    dict
+        {alpha: {"VaR": value, "CVaR": value}, ...}
+    """
+    returns_array = _as_1d_float_array(portfolio_returns)
+
+    report = {}
+
+    for alpha in alpha_levels:
+        alpha = float(alpha)
+
+        var_value = value_at_risk_historical(
+            returns_array,
+            alpha=alpha,
+            decimals=decimals,
+        )
+
+        cvar_value = cvar_expected_shortfall_historical(
+            returns_array,
+            alpha=alpha,
+            decimals=decimals,
+        )
+
+        report[alpha] = {
+            "VaR": var_value,
+            "CVaR": cvar_value,
+        }
+
+    return report
 
 
 if __name__ == "__main__":
-    example_returns = [0.01, -0.02, 0.03, -0.10, 0.05, 0.02, -0.01, 0.04]
+    rng = np.random.default_rng(42)
 
-    print(max_drawdown(example_returns))
-    print(max_drawdown_duration(example_returns))
-    print(drawdown_diagnostics(example_returns))
+    simulated_daily_returns = rng.normal(0.0005, 0.01, size=2000)
+    simulated_daily_returns_array = _as_1d_float_array(simulated_daily_returns)
+
+    print(
+        "VaR 5%:",
+        value_at_risk_historical(simulated_daily_returns_array, alpha=0.05, decimals=4),
+    )
+
+    print(
+        "CVaR 5%:",
+        cvar_expected_shortfall_historical(simulated_daily_returns_array, alpha=0.05, decimals=4),
+    )
+
+    print(
+        "Report:",
+        var_cvar_report(simulated_daily_returns_array, alpha_levels=(0.01, 0.05, 0.10), decimals=4),
+    )
+
+
