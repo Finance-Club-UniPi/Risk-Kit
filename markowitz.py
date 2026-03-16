@@ -95,12 +95,3 @@ print(f"Sharpe Ratio: {sharpe_arr[max_idx]:.4f}")
 print("\nWEIGHTS:")
 for i, ticker in enumerate(tickers):
     print(f"{ticker}: {all_weights[max_idx, i]*100:.2f}%")
-
-# OBJERVATIONS 
-print("How is it a straight line??")
-print("\nWell it's not a complete straight line because it has a very small curve. So why is that?")
-print("\nThis happens because first of all we have 2 assets whose corelation is extremely close to 1 but not exactly1.")
-print("\nAlso the fact that we have placed a constraint of a minimum weight = 20% on the simulation makes the curve even smaller")
-print("\nOn the one hand NVIDIA has a higher volatility (60%) and astronomical returns (4000%) compared to the simpler SP500 (vol:15%, ret:10%)")
-print("\nThis is very common on portfolios with a broad index and a high volatility/high return stock over a long period of time")
-print("\nThe slight curve happens at the Minimum Variance Portfolio (safest one) where NVIDIA takes the min wright (20%)")
