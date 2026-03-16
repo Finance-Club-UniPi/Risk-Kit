@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import yfinance as yf
 
 def compute_returns(prices: pd.DataFrame) -> pd.DataFrame:
     """
@@ -49,3 +50,21 @@ def markowitz_portofolio(prices: pd.DataFrame) -> dict:
         "volatility": volatility,
         "weights": weights
     }
+
+
+if __name__ == "__main__":
+    tickers = ["SPY", "QQQ", "IWM"]  # S&P 500, Nasdaq-100, Russell 2000
+    data = yf.download(tickers, start="2023-01-01", end="2025-03-17", progress=False)
+    # MultiIndex columns: (Close, SPY), (Close, QQQ), ... or single ticker -> plain Close
+    prices = data["Close"].copy() if len(tickers) > 1 else data["Close"].to_frame(tickers[0])
+    prices = prices.dropna()
+
+    result = markowitz_portofolio(prices)
+
+    print("Markowitz portfolio (random weights):")
+    print(f"  Expected return (annualized): {result['expected_return']:.4f}")
+    print(f"  Variance (annualized):        {result['variance']:.6f}")
+    print(f"  Volatility (annualized):      {result['volatility']:.4f}")
+    print("  Weights:")
+    for name, w in zip(prices.columns, result["weights"]):
+        print(f"    {name}: {w:.4f}")
