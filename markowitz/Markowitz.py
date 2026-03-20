@@ -167,13 +167,66 @@ def efficient_frontier(expected_returns, cov, n_points=25):
     return np.array(returns_list), np.array(volatility_list), weights_list
 
 
+def format_portfolio_report(
+    weights,
+    expected_returns,
+    cov,
+    risk_free_rate=0.0,
+    asset_names=None,
+    decimals=4,
+):
+    """Build a readable text report for portfolio weights and risk metrics."""
+    weights = np.asarray(weights, dtype=float).reshape(-1)
+    expected_returns = np.asarray(expected_returns, dtype=float).reshape(-1)
+
+    if weights.shape[0] != expected_returns.shape[0]:
+        raise ValueError("Dimension mismatch.")
+
+    if asset_names is None:
+        asset_names = [f"Asset {i + 1}" for i in range(weights.shape[0])]
+    elif len(asset_names) != weights.shape[0]:
+        raise ValueError("asset_names length must match number of assets.")
+
+    portfolio_ret = portfolio_return(weights, expected_returns)
+    portfolio_vol = portfolio_volatility(weights, cov)
+    sharpe_ratio = (
+        (portfolio_ret - risk_free_rate) / portfolio_vol
+        if portfolio_vol > 0
+        else float("nan")
+    )
+
+    weight_lines = [
+        f"  - {name}: {weight:.{decimals}f}"
+        for name, weight in zip(asset_names, weights)
+    ]
+
+    lines = [
+        "Tangency Portfolio Report",
+        "========================",
+        f"Risk-free rate: {risk_free_rate:.{decimals}f}",
+        "Weights:",
+        *weight_lines,
+        f"Expected annual return: {portfolio_ret:.{decimals}f}",
+        f"Annual volatility:     {portfolio_vol:.{decimals}f}",
+        f"Sharpe ratio:          {sharpe_ratio:.{decimals}f}",
+    ]
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":
     rng = np.random.default_rng(42)
     returns = rng.normal(0.0005, 0.01, size=(1000, 3))
 
     expected_returns, cov = estimate_mean_cov(returns)
-    weights = tangency_portfolio(expected_returns, cov, risk_free_rate=0.02)
+    risk_free_rate = 0.03
+    weights = tangency_portfolio(expected_returns, cov, risk_free_rate=risk_free_rate)
 
-    print(weights)
-    print(portfolio_return(weights, expected_returns))
-    print(portfolio_volatility(weights, cov))
+    report = format_portfolio_report(
+        weights,
+        expected_returns,
+        cov,
+        risk_free_rate=risk_free_rate,
+        asset_names=["Asset A", "Asset B", "Asset C"],
+        decimals=4,
+    )
+    print(report)
