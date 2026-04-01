@@ -50,6 +50,8 @@ artifacts/configs/*.json
 
 # Reports (keep structure, ignore generated files)
 reports/figures/*.png
+reports/figures/*.html
+reports/figures/*.pkl
 reports/summary.md
 
 # OS
